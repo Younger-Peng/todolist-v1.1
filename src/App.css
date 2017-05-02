@@ -1,0 +1,22 @@
+
+
+.App {
+  color: #333;
+  border: 1px solid #aaa;
+  border-radius: 4px;
+  background: white;
+  margin: 2em;
+  padding: 0 1em;
+  min-width: 32em;
+  min-height: 20em;
+  box-shadow: 0 0 1em hsla(0,0%,0%,.15);
+}
+.App>h1{
+	text-align: center;
+}
+.App>.todoList>li:nth-child(even){
+	background: transparent;
+}
+.App>.todoList>li:nth-child(odd){
+	background: #eee;
+}
