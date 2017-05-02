@@ -3,11 +3,12 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "leancloud-storage": "^2.2.1",
     "normalize.css": "^6.0.0",
     "react": "^15.5.4",
     "react-dom": "^15.5.4"
   },
-  "homepage":" https://younger-peng.github.io/todolist-v1.1/build",
+  "homepage": " https://younger-peng.github.io/todolist-v1.1/build",
   "devDependencies": {
     "react-scripts": "0.9.5"
   },
