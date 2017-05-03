@@ -4,4 +4,8 @@
 	margin-bottom: 1em;
 	font-size: 16px;
 	padding: .2em;
+	outline: none;
+}
+.TodoInput::-webkit-input-placeholder{
+	color: #ddd;
 }
