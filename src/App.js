@@ -2,24 +2,22 @@ import React, { Component } from 'react';
 import './App.css';
 import TodoInput from './TodoInput'
 import TodoItem from './TodoItem'
-import * as localStore from './localStore'
 import 'normalize.css'
 import './reset.css'
-// import AV from 'leancloud-storage'
+import AV from './leancloud'
+import UserDialog from './UserDialog'
+import {getCurrentUser, signOut, createTodoList, saveDataIdToUser, downloadTodoList} from './leancloud'
+// var TodoFolder = AV.Object.extend("TodoFolder")
+// var todoFolder = new TodoFolder()
 
-// var APP_ID = 6djTrCTvHdHEdcIREHgGBIet-gzGzoHsz
-// var APP_KEY = xcDIaORE7NRzamuuA0VWUX3r
-// AV.init({
-//   appId: APP_ID,
-//   appKey: APP_KEY
-// })
 
 class App extends Component {
   constructor(props){
     super(props)
     this.state={
+      user: getCurrentUser() || {},
       newTodo: '',
-      todoList: localStore.load("todoList") || []
+      todoList: []
     }
   }
   render() {
@@ -35,7 +33,8 @@ class App extends Component {
     })
     return (
       <div className="App">
-        <h1>我的待办</h1>
+        <h1>{this.state.user.username||'我'}的待办
+        {this.state.user.id ? <button onClick={this.onSignOut.bind(this)}>登出</button> : null}</h1>
         <div>
           <TodoInput content={this.state.newTodo}
             onSubmit={this.addTodo.bind(this)}
@@ -44,13 +43,44 @@ class App extends Component {
         <ol className="todoList">
           {todos}
         </ol>
+        {this.state.user.id ? null : <UserDialog onSignUp={this.onSignUp.bind(this)}
+          onSignIn={this.onSignIn.bind(this)} />}
       </div>
     );
   }
+  componentWillMount(){
+    let user = this.state.user
+    let hasProp = false
+    for(let key in user){
+      hasProp = true
+    }
+    if(hasProp){
+      downloadTodoList.call(this,user)
+    }else {
+      return
+    }
+  }
   componentDidUpdate(){
-    localStore.save('todoList',this.state.todoList)
+    
+  }
+  onSignIn(user){
+    downloadTodoList.call(this,user)
+  }
+  onSignUp(user){
+    let stateCopy = JSON.parse(JSON.stringify(this.state))
+    stateCopy.user = user
+    createTodoList.call(null,saveDataIdToUser.bind(this))
+    // this.setState(stateCopy) 等todoListId存在user之后，再setState
+  }
+  onSignOut(e){
+    let stateCopy = JSON.parse(JSON.stringify(this.state))
+    stateCopy.user = ''
+    stateCopy.todoList = []
+    signOut.call(null)
+    this.setState(stateCopy)
   }
   addTodo(e){
+    let _this = this
     let stateCopy = JSON.parse(JSON.stringify(this.state))
     stateCopy.newTodo='';
     stateCopy.todoList.push({
@@ -59,8 +89,16 @@ class App extends Component {
       status: null,
       deleted: false
     })
-
-    this.setState(stateCopy)
+    this.saveToCloud.call(this,stateCopy)
+  }
+  saveToCloud(data){
+    let _this = this
+    let todoListId = this.state.user.todoList
+      var todo = new AV.Object.createWithoutData('TodoList',todoListId)
+      todo.set('todoList',data.todoList)
+      todo.save().then(function(todo){
+        _this.setState(data)
+      })
   }
   changeTitle(e){
     this.setState({
@@ -74,7 +112,7 @@ class App extends Component {
     let todoCopy = JSON.parse(JSON.stringify(todo))
     todoCopy.status = todo.status === 'completed' ? '' : 'completed'
     stateCopy.todoList[index] = todoCopy
-    this.setState(stateCopy)
+    this.saveToCloud.call(this,stateCopy)
   }
   delete(e,todo){
     let index = this.state.todoList.indexOf(todo)
@@ -82,7 +120,7 @@ class App extends Component {
     let todoCopy = JSON.parse(JSON.stringify(todo))
     todoCopy.deleted = true
     stateCopy.todoList[index] = todoCopy
-    this.setState(stateCopy)   
+    this.saveToCloud.call(this,stateCopy)
   }
 }
 
